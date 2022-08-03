@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 quircs = "0.10.0"
 image = "^0.24"
+ndarray = "^0.15"
