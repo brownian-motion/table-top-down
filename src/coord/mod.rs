@@ -34,6 +34,7 @@ impl ScreenToRealWorldTransform {
     //     unimplemented!()
     // }
 
+    // this would find the homographic projection; TODO!
     pub fn from_pixels(unit_square: [PixelCoordinate; 4]) -> Result<Self, &'static str> {
         // determines the transformation that would project the unit square with coordinates [(0,0), (1,0), (1,1), (0,1)] to the given point.
         // see https://www-users.cse.umn.edu/~hspark/CSci5980/Lec2_ProjectionMatrix.pdf
@@ -41,7 +42,7 @@ impl ScreenToRealWorldTransform {
     }
 
     pub fn pixel_to_real(&self, coord: PixelCoordinate) -> RealWorldCoordinate2D {
-        self.forward.transform(coord as PlanarCoordinate<f64>) as RealWorldCoordinate2D
+        self.backward.transform(coord as PlanarCoordinate<f64>) as RealWorldCoordinate2D
     }
 
     pub fn real_to_pixel(&self, coord: RealWorldCoordinate2D) -> PixelCoordinate {
@@ -111,5 +112,29 @@ mod test {
         let pixel_coord = transformation.real_to_pixel(real_coord);
 
         assert_coord_approximately_eq(PixelCoordinate { x: 757.000, y: 51.311 }, pixel_coord, 0.001);
+    }
+
+    // TODO: figure out if these numbers are legit!
+    #[test]
+    pub fn practice_pixel_to_real_using_matrix_inversion() {
+        // from https://www.youtube.com/watch?v=fVJeJMWZcq8
+
+        let transform_real_to_pixel = array![
+            [1.4003, 0.3827, -136.5900],
+            [-0.0785, 1.8049, -83.1054],
+            [-0.0003, 0.0016, 1.0000],
+        ];
+        // from wolfram alpha using the really imprecise data above, so the result is gonna be imprecise
+        let inverse_of_that = array![
+            [0.718693, -0.222982, 79.6353],
+            [0.0383595, 0.504129, 47.1354],
+            [0.000154233, -0.000873502, 0.98474],
+        ];
+        let transformation = ScreenToRealWorldTransform::from_matrices(Array2::zeros((3, 3)), inverse_of_that).unwrap();
+
+        let pixel_coord = PixelCoordinate { x: 757.000, y: 51.311 };
+        let real_coord = transformation.pixel_to_real(pixel_coord);
+
+        assert_coord_approximately_eq(RealWorldCoordinate2D{x: 600.0, y: 100.0 }, real_coord, 40.0 /* super imprecise, see above */);
     }
 }

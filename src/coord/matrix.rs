@@ -8,33 +8,33 @@ use crate::coord::traits::Transformation;
 
 pub type InvalidMatrixDimensionError = String;
 
-pub struct MatrixTransform<T, const IDim: usize, const ODim: usize> {
+pub struct MatrixTransform<T, const IDIM: usize, const ODIM: usize> {
     pub transform_matrix: ndarray::Array2<T>,
 }
 
-impl<T, const IDim: usize, const ODim: usize> TryFrom<ndarray::Array2<T>> for MatrixTransform<T, IDim, ODim> {
+impl<T, const IDIM: usize, const ODIM: usize> TryFrom<ndarray::Array2<T>> for MatrixTransform<T, IDIM, ODIM> {
     type Error = InvalidMatrixDimensionError;
 
     fn try_from(transform_matrix: ndarray::Array2<T>) -> Result<Self, Self::Error> {
         let shape = transform_matrix.shape();
-        if shape != &[IDim, ODim] {
-            return Err(format!("expected transform with shape {}x{} but received {}x{}", IDim, ODim, shape[0], shape[1]));
+        if shape != &[IDIM, ODIM] {
+            return Err(format!("expected transform with shape {}x{} but received {}x{}", IDIM, ODIM, shape[0], shape[1]));
         }
 
         return Ok(MatrixTransform { transform_matrix });
     }
 }
 
-impl<T, const IDim: usize, const ODim: usize> Transformation<Array1<T>, Array1<T>> for MatrixTransform<T, IDim, ODim> where T: LinalgScalar {
+impl<T, const IDIM: usize, const ODIM: usize> Transformation<Array1<T>, Array1<T>> for MatrixTransform<T, IDIM, ODIM> where T: LinalgScalar {
     fn transform(&self, in_coord: Array1<T>) -> Array1<T> {
-        let mut result = Array1::zeros(ODim);
+        let mut result = Array1::zeros(ODIM);
         ndarray::linalg::general_mat_vec_mul(One::one(), &self.transform_matrix, &in_coord, One::one(), &mut result);
 
         result
     }
 }
 
-impl<T, const IDim: usize, const ODim: usize> Transformation<HomogeneousCoordinate<T>, HomogeneousCoordinate<T>> for MatrixTransform<T, IDim, ODim> where T: LinalgScalar {
+impl<T, const IDIM: usize, const ODIM: usize> Transformation<HomogeneousCoordinate<T>, HomogeneousCoordinate<T>> for MatrixTransform<T, IDIM, ODIM> where T: LinalgScalar {
     fn transform(&self, in_coord: HomogeneousCoordinate<T>) -> HomogeneousCoordinate<T> {
         let in_array: Array1<T> = in_coord.into();
         let out_array: Array1<T> = self.transform(in_array);
@@ -42,7 +42,7 @@ impl<T, const IDim: usize, const ODim: usize> Transformation<HomogeneousCoordina
     }
 }
 
-impl<T, const IDim: usize, const ODim: usize> Transformation<PlanarCoordinate<T>, PlanarCoordinate<T>> for MatrixTransform<T, IDim, ODim> where T: LinalgScalar {
+impl<T, const IDIM: usize, const ODIM: usize> Transformation<PlanarCoordinate<T>, PlanarCoordinate<T>> for MatrixTransform<T, IDIM, ODIM> where T: LinalgScalar {
     fn transform(&self, in_coord: PlanarCoordinate<T>) -> PlanarCoordinate<T> {
         let in_homo: HomogeneousCoordinate<T> = HomogeneousCoordinate::from(in_coord);
         let out_homo: HomogeneousCoordinate<T> = self.transform(in_homo);
